@@ -1,6 +1,3 @@
-import os
-from pathlib import Path
-
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -34,13 +31,6 @@ st.markdown("""
     color: #6b7280;
     margin-bottom: 20px;
 }
-.kpi-card {
-    background: #ffffff;
-    padding: 18px;
-    border-radius: 16px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-    border: 1px solid #e5e7eb;
-}
 .section-title {
     font-size: 24px;
     font-weight: 700;
@@ -55,16 +45,8 @@ st.markdown("""
 # CONNEXION SUPABASE
 # =========================
 
-env_path = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(dotenv_path=env_path)
-
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    st.error("Clés Supabase manquantes dans le fichier .env")
-    st.stop()
-
+SUPABASE_URL = st.secrets["SUPABASE_URL"]
+SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 
@@ -83,6 +65,7 @@ dim_fournisseur = load_table("dim_fournisseur")
 dim_magasin = load_table("dim_magasin")
 dim_produit = load_table("dim_produit")
 dim_date = load_table("dim_date")
+
 
 data = (
     fact
@@ -120,29 +103,10 @@ networks = sorted(data["network"].dropna().unique())
 categories = sorted(data["category"].dropna().unique())
 stores = sorted(data["store_name"].dropna().unique())
 
-selected_suppliers = st.sidebar.multiselect(
-    "Fournisseur",
-    suppliers,
-    default=suppliers
-)
-
-selected_networks = st.sidebar.multiselect(
-    "Réseau",
-    networks,
-    default=networks
-)
-
-selected_categories = st.sidebar.multiselect(
-    "Catégorie produit",
-    categories,
-    default=categories
-)
-
-selected_stores = st.sidebar.multiselect(
-    "Magasin",
-    stores,
-    default=stores
-)
+selected_suppliers = st.sidebar.multiselect("Fournisseur", suppliers, default=suppliers)
+selected_networks = st.sidebar.multiselect("Réseau", networks, default=networks)
+selected_categories = st.sidebar.multiselect("Catégorie produit", categories, default=categories)
+selected_stores = st.sidebar.multiselect("Magasin", stores, default=stores)
 
 min_date = data["purchase_date"].min().date()
 max_date = data["purchase_date"].max().date()
@@ -177,7 +141,11 @@ if filtered.empty:
 # HEADER
 # =========================
 
-st.markdown('<div class="main-title">🌸 Cube BI Achats — Pilotage des achats fleurs</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="main-title">🌸 Cube BI Achats — Pilotage des achats fleurs</div>',
+    unsafe_allow_html=True
+)
+
 st.markdown(
     '<div class="subtitle">Dashboard connecté à Supabase pour analyser les achats, fournisseurs, magasins, marges et qualité data.</div>',
     unsafe_allow_html=True
@@ -220,10 +188,6 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
 ])
 
 
-# =========================
-# TAB 1 — VUE GLOBALE
-# =========================
-
 with tab1:
     st.markdown('<div class="section-title">Évolution temporelle des achats</div>', unsafe_allow_html=True)
 
@@ -263,10 +227,6 @@ with tab1:
         st.bar_chart(cat_perf, x="category", y="purchase_value")
 
 
-# =========================
-# TAB 2 — FOURNISSEURS
-# =========================
-
 with tab2:
     st.markdown('<div class="section-title">Analyse fournisseurs</div>', unsafe_allow_html=True)
 
@@ -289,10 +249,6 @@ with tab2:
     st.bar_chart(suppliers_perf.head(10), x="supplier_name", y="montant_achats")
 
 
-# =========================
-# TAB 3 — MAGASINS
-# =========================
-
 with tab3:
     st.markdown('<div class="section-title">Analyse magasins</div>', unsafe_allow_html=True)
 
@@ -313,10 +269,6 @@ with tab3:
     st.subheader("Top magasins par montant d’achats")
     st.bar_chart(stores_perf.head(10), x="store_name", y="montant_achats")
 
-
-# =========================
-# TAB 4 — PRODUITS
-# =========================
 
 with tab4:
     st.markdown('<div class="section-title">Analyse produits & familles</div>', unsafe_allow_html=True)
@@ -345,10 +297,6 @@ with tab4:
     st.bar_chart(group_perf, x="product_group", y="purchase_value")
 
 
-# =========================
-# TAB 5 — QUALITÉ DATA
-# =========================
-
 with tab5:
     st.markdown('<div class="section-title">Contrôle qualité des données</div>', unsafe_allow_html=True)
 
@@ -369,10 +317,6 @@ with tab5:
     st.subheader("Aperçu des données consolidées")
     st.dataframe(filtered.head(100), use_container_width=True)
 
-
-# =========================
-# CONCLUSION
-# =========================
 
 st.divider()
 
